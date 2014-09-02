@@ -14,13 +14,12 @@
 MODULE_LICENSE(DRIVER_LICENSE);
 MODULE_AUTHOR(DRIVER_AUTHOR);
 
-static void hello_world_disconnect(struct usb_interface *iface)
+static void __exit hello_world_exit(void)
 {
 	pr_debug("Bye!\n");
 }
 
-static int hello_world_probe(struct usb_interface *iface,
-		 const struct usb_device_id *id)
+static int __init hello_world_init(void)
 {
 	pr_debug("Hello, USB!");
 	return 0;
@@ -35,12 +34,6 @@ static struct usb_device_id usb_kbd_id_table[] = {
 
 MODULE_DEVICE_TABLE(usb, usb_kbd_id_table);
 
-static struct usb_driver hello_world_driver = {
-	.name        = "hello_world",
-	.probe       = hello_world_probe,
-	.disconnect  = hello_world_disconnect,
-	.id_table    = usb_kbd_id_table,
-};
-
-module_usb_driver(hello_world_driver);
+module_init(hello_world_init);
+module_exit(hello_world_exit);
 
