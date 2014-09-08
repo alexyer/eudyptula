@@ -2,6 +2,7 @@
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/string.h>
+#include <linux/miscdevice.h>
 #include <asm/uaccess.h>
 
 /*
@@ -26,6 +27,7 @@ static ssize_t device_write(struct file *, const char *, size_t, loff_t *);
 #define DEVICE_NAME "eudyptula"
 #define BUF_LEN 80
 #define EUDYPTULA_ID "c70201c12db9"
+#define DYNAMIC_MINOR 73
 
 static int major;
 static int dev_open = 0;
@@ -39,29 +41,29 @@ static struct file_operations fops = {
 	.release = device_release
 };
 
+static struct miscdevice my_dev;
+
 int init_module(void)
 {
-	major = register_chrdev(0, DEVICE_NAME, &fops);
+	int retval;
+	my_dev.minor = DYNAMIC_MINOR;
+	my_dev.name = DEVICE_NAME;
+	my_dev.fops = &fops;
+	retval = misc_register(&my_dev);
 
-	if (major < 0) {
-		printk("Registering the character device failed with %d\n",
-			major);
-		return major;
+	if (retval){
+		printk("error: %i", retval);
+		return retval;
 	}
 
-	printk("<1>I was assigned major number %d.  To talk to\n", major);
-	printk("<1>the driver, create a dev file with\n");
-	printk("'mknod /dev/chardev c %d 0'.\n", major);
-	printk("<1>Try various minor numbers.  Try to cat and echo to\n");
-	printk("the device file.\n");
-	printk("<1>Remove the device file and module when done.\n");
+	printk("minor: %i", my_dev.minor);
 
 	return 0;
 }
 
 void cleanup_module(void)
 {
-	unregister_chrdev(major, DEVICE_NAME);
+	misc_deregister(&my_dev);
 }
 
 static int device_open(struct inode *inode, struct file *file)
