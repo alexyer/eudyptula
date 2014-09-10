@@ -64,8 +64,8 @@ static ssize_t device_read(struct file *filp,
 	size_t length,
 	loff_t *offset)
 {
-	return (*offset != 0 || copy_to_user(buffer, id, strlen(id)))
-			? 0 : (*offset = strlen(id));
+	return simple_read_from_buffer(buffer, length, offset, id,
+			strlen(id));
 }
 
 static ssize_t
