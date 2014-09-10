@@ -25,6 +25,7 @@ static ssize_t device_write(struct file *, const char *, size_t, loff_t *);
 #define EUDYPTULA_ID "c70201c12db9"
 
 static char msg[BUF_LEN];
+static char *id = EUDYPTULA_ID;
 
 static const struct file_operations fops = {
 	.owner = THIS_MODULE,
@@ -63,21 +64,8 @@ static ssize_t device_read(struct file *filp,
 	size_t length,
 	loff_t *offset)
 {
-	char *msg = EUDYPTULA_ID;
-	int len = strlen(msg);
-
-	if (length < len)
-		return -EINVAL;
-
-	if (*offset != 0)
-		return 0;
-
-	if (copy_to_user(buffer, msg, len))
-		return -EFAULT;
-
-	*offset = len;
-
-	return len;
+	return (*offset != 0 || copy_to_user(buffer, id, strlen(id)))
+			? 0 : (*offset = strlen(id));
 }
 
 static ssize_t
