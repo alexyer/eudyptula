@@ -24,7 +24,7 @@ static ssize_t device_write(struct file *, const char *, size_t, loff_t *);
 #define BUF_LEN 80
 #define EUDYPTULA_ID "c70201c12db9"
 
-static char msg[BUF_LEN];
+static char msg[BUF_LEN] = {0};
 static char *id = EUDYPTULA_ID;
 
 static const struct file_operations fops = {
@@ -74,8 +74,8 @@ device_write(struct file *filp,
 	size_t length,
 	loff_t *offset)
 {
-	if (copy_from_user(msg, buffer, length))
-		return -EFAULT;
+	simple_write_to_buffer(msg, BUF_LEN, offset,
+			buffer, length);
 
 	if (!strncmp(msg, EUDYPTULA_ID, strlen(EUDYPTULA_ID)) &&
 			length - 1 == strlen(EUDYPTULA_ID))
