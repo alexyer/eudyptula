@@ -21,11 +21,14 @@ static char *id = EUDYPTULA_ID;
 
 static const char *dir_name = "eudyptula";
 static const char *id_file_name = "id";
+static const char *jiffies_file_name = "jiffies";
 
 struct dentry *root_dir;
 struct dentry *id_file;
+struct dentry *jiffies_file;
 
 int id_file_data;
+int jiffies_file_data;
 
 static ssize_t id_file_read(struct file *filp,
 	char *buffer,
@@ -51,9 +54,25 @@ static ssize_t id_file_write(struct file *filp,
 	return -EINVAL;
 }
 
+static ssize_t jiffies_file_read(struct file *filp,
+	char *buffer,
+	size_t length,
+	loff_t *offset)
+{
+	char jiffies_str[BUF_LEN] = {0};
+	snprintf(jiffies_str, sizeof(jiffies_str), "%lu", jiffies);
+
+	return simple_read_from_buffer(buffer, length, offset, jiffies_str,
+			sizeof(jiffies_str));
+}
+
 static const struct file_operations id_fops = {
 	.read = id_file_read,
 	.write = id_file_write,
+};
+
+static const struct file_operations jiffies_fops = {
+	.read = jiffies_file_read,
 };
 
 static int __init hello_world_init(void)
@@ -73,15 +92,8 @@ static int __init hello_world_init(void)
 	id_file = debugfs_create_file(id_file_name, 0666, root_dir,
 			&id_file_data, &id_fops);
 
-	if (!id_file) {
-		pr_debug("failed to create debugfs file");
-		return 0;
-	}
-
-	if ((int)id_file == -ENODEV) {
-		pr_debug("Your kernel build without debugfs support");
-		return -ENODEV;
-	}
+	jiffies_file = debugfs_create_file(jiffies_file_name, 0644, root_dir,
+			&jiffies_file_data, &jiffies_fops);
 
 	return 0;
 }
