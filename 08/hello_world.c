@@ -11,24 +11,29 @@
 #define DRIVER_LICENSE "GPL"
 
 #define BUF_LEN 80
+#define PG_SIZE 80*23
 #define EUDYPTULA_ID "c70201c12db9"
 
 MODULE_LICENSE(DRIVER_LICENSE);
 MODULE_AUTHOR(DRIVER_AUTHOR);
 
 static char msg[BUF_LEN] = {0};
+static char text[PG_SIZE] = {0};
 static char *id = EUDYPTULA_ID;
 
 static const char *dir_name = "eudyptula";
 static const char *id_file_name = "id";
 static const char *jiffies_file_name = "jiffies";
+static const char *foo_file_name = "foo";
 
 struct dentry *root_dir;
 struct dentry *id_file;
 struct dentry *jiffies_file;
+struct dentry *foo_file;
 
 int id_file_data;
 int jiffies_file_data;
+int foo_file_data;
 
 static ssize_t id_file_read(struct file *filp,
 	char *buffer,
@@ -54,6 +59,24 @@ static ssize_t id_file_write(struct file *filp,
 	return -EINVAL;
 }
 
+static ssize_t foo_file_read(struct file *filp,
+	char *buffer,
+	size_t length,
+	loff_t *offset)
+{
+	return simple_read_from_buffer(buffer, length, offset, text,
+			strlen(text));
+}
+
+static ssize_t foo_file_write(struct file *filp,
+	const char *buffer,
+	size_t length,
+	loff_t *offset)
+{
+	return simple_write_to_buffer(text, PG_SIZE, offset,
+			buffer, length);
+}
+
 static ssize_t jiffies_file_read(struct file *filp,
 	char *buffer,
 	size_t length,
@@ -75,6 +98,11 @@ static const struct file_operations jiffies_fops = {
 	.read = jiffies_file_read,
 };
 
+static const struct file_operations foo_fops = {
+	.read = foo_file_read,
+	.write = foo_file_write,
+};
+
 static int __init hello_world_init(void)
 {
 	root_dir = debugfs_create_dir(dir_name, NULL);
@@ -94,6 +122,9 @@ static int __init hello_world_init(void)
 
 	jiffies_file = debugfs_create_file(jiffies_file_name, 0644, root_dir,
 			&jiffies_file_data, &jiffies_fops);
+
+	foo_file = debugfs_create_file(foo_file_name, 0644, root_dir,
+			&foo_file_data, &foo_fops);
 
 	return 0;
 }
