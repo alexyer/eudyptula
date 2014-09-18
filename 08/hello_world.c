@@ -35,6 +35,8 @@ int id_file_data;
 int jiffies_file_data;
 int foo_file_data;
 
+struct semaphore mr_sem;
+
 static ssize_t id_file_read(struct file *filp,
 	char *buffer,
 	size_t length,
@@ -64,8 +66,15 @@ static ssize_t foo_file_read(struct file *filp,
 	size_t length,
 	loff_t *offset)
 {
-	return simple_read_from_buffer(buffer, length, offset, text,
+	if (down_interruptible(&mr_sem))
+		return -EINTR;
+
+	int ret = simple_read_from_buffer(buffer, length, offset, text,
 			strlen(text));
+
+	up(&mr_sem);
+
+	return ret;
 }
 
 static ssize_t foo_file_write(struct file *filp,
@@ -73,8 +82,15 @@ static ssize_t foo_file_write(struct file *filp,
 	size_t length,
 	loff_t *offset)
 {
-	return simple_write_to_buffer(text, PG_SIZE, offset,
+	if (down_interruptible(&mr_sem))
+		return -EINTR;
+
+	int ret = simple_write_to_buffer(text, PG_SIZE, offset,
 			buffer, length);
+
+	up(&mr_sem);
+
+	return ret;
 }
 
 static ssize_t jiffies_file_read(struct file *filp,
@@ -105,6 +121,7 @@ static const struct file_operations foo_fops = {
 
 static int __init hello_world_init(void)
 {
+	sema_init(&mr_sem, 1);
 	root_dir = debugfs_create_dir(dir_name, NULL);
 
 	if (!root_dir) {
