@@ -2,7 +2,7 @@
 #include <linux/module.h>
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("c70201c12db9");
+MODULE_AUTHOR("2fc60824db33");
 
 static int __init hello_world_init(void)
 {
